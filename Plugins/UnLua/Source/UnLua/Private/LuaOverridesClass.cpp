@@ -22,7 +22,11 @@ ULuaOverridesClass* ULuaOverridesClass::Create(UClass* Class)
     auto ClassName = MakeUniqueObjectName(GetTransientPackage(), Class, FName(*ClassNameString));
     auto Ret = NewObject<ULuaOverridesClass>(GetTransientPackage(), ClassName, RF_Public | RF_Transient);
     Ret->ClassFlags |= CLASS_NewerVersionExists; // bypass FBlueprintActionDatabase::RefreshClassActions
+#if UE_VERSION_NEWER_THAN_OR_EQUAL(5,6,0)
+    Ret->SetDefaultObject(StaticClass()->GetDefaultObject());
+#else
     Ret->ClassDefaultObject = StaticClass()->GetDefaultObject();
+#endif
     Ret->SetSuperStruct(StaticClass());
     Ret->Bind();
     Ret->Owner = Class;
@@ -67,26 +71,20 @@ void ULuaOverridesClass::AddToOwner()
     if (!Class)
         return;
 
-#if UE_VERSION_NEWER_THAN(5, 2, 1)
-    auto ChildrenPtr = Class->Children.Get();
-
-    auto Field = &ChildrenPtr;
-#else
-    auto Field = &(Class->Children);
-#endif
-    while (*Field)
+    // Check if already added by traversing the linked list
+    UField* Current = Class->Children;
+    while (Current)
     {
-        if (*Field == this)
-        {
-            Field = nullptr;
-            break;
-        }
-        Field = &(*Field)->Next;
+        if (Current == this)
+            goto AlreadyAdded;
+        Current = Current->Next;
     }
 
-    if (Field)
-        *Field = this;
+    // Not found, prepend to the Children linked list
+    this->Next = Class->Children;
+    Class->Children = this;
 
+AlreadyAdded:
     if (Class->IsRooted() || GUObjectArray.IsDisregardForGC(Class))
         AddToRoot();
 }
@@ -97,21 +95,24 @@ void ULuaOverridesClass::RemoveFromOwner()
     if (!Class)
         return;
 
-#if UE_VERSION_NEWER_THAN(5, 2, 1)
-    auto ChildrenPtr = Class->Children.Get();
-
-    auto Field = &ChildrenPtr;
-#else
-    auto Field = &Class->Children;
-#endif
-    while (*Field)
+    // If this is the first child, update Children directly
+    if (Class->Children == this)
     {
-        if (*Field == this)
+        Class->Children = nullptr;
+    }
+    else
+    {
+        // Traverse the linked list to find and unlink this node
+        UField* Current = Class->Children;
+        while (Current)
         {
-            *Field = nullptr;
-            break;
+            if (Current->Next == this)
+            {
+                Current->Next = nullptr;
+                break;
+            }
+            Current = Current->Next;
         }
-        Field = &(*Field)->Next;
     }
 
     if (!Class->IsRooted() && !GUObjectArray.IsDisregardForGC(Class))

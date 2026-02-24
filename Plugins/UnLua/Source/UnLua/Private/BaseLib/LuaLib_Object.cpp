@@ -251,6 +251,12 @@ int32 UObject_Delete(lua_State* L)
     if (UnLua::LowLevel::IsReleasedPtr(Object))
         return 0;
 
+    const bool bValid = UnLua::IsUObjectValid(Object) && IsValid(Object) && !Object->IsUnreachable();
+    if (!bValid)
+    {
+        return 0;
+    }
+
     UnLua::FLuaEnv::FindEnvChecked(L).GetObjectRegistry()->NotifyUObjectLuaGC(Object);
     return 0;
 }
@@ -320,7 +326,7 @@ BEGIN_EXPORT_CLASS(FSoftObjectPtr, const UObject*)
     ADD_CONST_FUNCTION_EX("IsNull", bool, IsNull)
     ADD_CONST_FUNCTION_EX("IsPending", bool, IsPending)
     ADD_FUNCTION_EX("Reset", void, Reset)
-    ADD_FUNCTION_EX("Set", void, operator=, const UObject*)
+    ADD_FUNCTION_EX("Set", FSoftObjectPtr&, operator=, const UObject*)
     ADD_FUNCTION_EX("GetAssetName", FString, GetAssetName)
     ADD_FUNCTION_EX("GetLongPackageName", FString, GetLongPackageName)
     ADD_CONST_FUNCTION_EX("Get", UObject*, Get)

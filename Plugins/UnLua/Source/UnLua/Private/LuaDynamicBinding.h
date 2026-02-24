@@ -46,7 +46,7 @@ extern FLuaDynamicBinding GLuaDynamicBinding;
 
 struct lua_State;
 
-class UNLUA_API FScopedLuaDynamicBinding
+class FScopedLuaDynamicBinding
 {
 public:
     FScopedLuaDynamicBinding(lua_State *InL, UClass *Class, const TCHAR *ModuleName, int32 InitializerTableRef);

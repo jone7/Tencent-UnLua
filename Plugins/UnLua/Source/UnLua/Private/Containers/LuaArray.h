@@ -22,7 +22,7 @@
 #define ALIGNMENT_PLACEHOLDER
 #endif
 
-class UNLUA_API FLuaArray
+class FLuaArray
 {
 public:
     struct FLuaArrayEnumerator

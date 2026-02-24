@@ -57,8 +57,11 @@ namespace UnLuaDefaultParamCollectorUbtPlugin
 
         private void Generate()
         {
-            foreach(UhtModule module in Session.Modules)
+            //foreach (UhtPackage package in Session.Packages)
+            foreach (UhtModule module in Session.Modules)
             {
+                // var moduleType = package.Module.ModuleType;
+                // ParseModule(package.Module.Name, moduleType, package.Module.OutputDirectory);
                 foreach (UhtPackage package in module.Packages)
                 {
                     var moduleType = package.Module.Module.ModuleType;
@@ -70,7 +73,7 @@ namespace UnLuaDefaultParamCollectorUbtPlugin
                     QueueClassExports(package, package);
                 }
             }
-
+            
             // Wait for all the classes to export
             Finish();
         }

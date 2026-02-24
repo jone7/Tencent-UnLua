@@ -27,9 +27,7 @@ public:
     virtual void RegisterCommands() override;
 
     TSharedPtr<FUICommandInfo> CreateLuaTemplate;
-	TSharedPtr<FUICommandInfo> CopyAsRelativePath;
-	TSharedPtr<FUICommandInfo> CreateDefaultLuaTemplate;
-    TSharedPtr<FUICommandInfo> CopyAsDefaultModuleName;
+    TSharedPtr<FUICommandInfo> CopyAsRelativePath;
     TSharedPtr<FUICommandInfo> BindToLua;
     TSharedPtr<FUICommandInfo> UnbindFromLua;
     TSharedPtr<FUICommandInfo> HotReload;

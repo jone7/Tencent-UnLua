@@ -208,7 +208,7 @@ namespace UnLua
                 new_class.__newindex = NewIndex
                 new_class.Super = super_class
 
-                return new_class, super_class
+              return new_class
             end
 
             _G.Class = Class

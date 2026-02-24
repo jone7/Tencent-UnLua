@@ -27,7 +27,7 @@ namespace UnLua
 {
     class FLuaEnv;
 
-    class UNLUA_API FPropertyRegistry
+    class FPropertyRegistry
     {
     public:
         explicit FPropertyRegistry(FLuaEnv* Env);
@@ -39,6 +39,7 @@ namespace UnLua
          */
         TSharedPtr<ITypeInterface> CreateTypeInterface(lua_State* L, int32 Index);
 
+    private:
         TSharedPtr<ITypeInterface> GetBoolProperty();
         TSharedPtr<ITypeInterface> GetIntProperty();
         TSharedPtr<ITypeInterface> GetFloatProperty();
@@ -47,7 +48,6 @@ namespace UnLua
         TSharedPtr<ITypeInterface> GetTextProperty();
         TSharedPtr<ITypeInterface> GetFieldProperty(UField* Field);
 
-	private:
         FLuaEnv* Env;
         UScriptStruct* PropertyCollector;
         TMap<UField*, TSharedPtr<ITypeInterface>> FieldProperties;

@@ -80,8 +80,7 @@ public class UnLuaEditor : ModuleRules
                 "Sockets",
                 "UnLua",
                 "Lua",
-                "ToolMenus",
-                "Json"
+                "ToolMenus"
             }
         );
 
