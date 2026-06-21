@@ -29,10 +29,13 @@ public class LuaRapidjson : ModuleRules
         PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 #if UE_5_6_OR_LATER
         CppCompileWarningSettings.UndefinedIdentifierWarningLevel = WarningLevel.Off;
+        CppCompileWarningSettings.ShadowVariableWarningLevel = WarningLevel.Off;
 #elif UE_5_5_OR_LATER
 		UndefinedIdentifierWarningLevel = WarningLevel.Off;
+        ShadowVariableWarningLevel = WarningLevel.Off;
 #else
         bEnableUndefinedIdentifierWarnings = false;
+        bEnableShadowVariableWarnings = false;
 #endif
         bEnableExceptions = true;
 
