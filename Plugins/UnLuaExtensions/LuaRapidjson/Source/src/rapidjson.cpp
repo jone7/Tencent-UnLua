@@ -33,7 +33,16 @@
 #include "file.hpp"
 #include "StringStream.hpp"
 
-using namespace rapidjson;
+// 只导入本文件所需名称，避免 rapidjson::SizeType 污染 UE 模板的全局名称查找。
+using rapidjson::AutoUTFInputStream;
+using rapidjson::Document;
+using rapidjson::FileReadStream;
+using rapidjson::FileWriteStream;
+using rapidjson::PrettyWriter;
+using rapidjson::SchemaDocument;
+using rapidjson::SchemaValidator;
+using rapidjson::StringBuffer;
+using rapidjson::Writer;
 
 #ifndef LUA_RAPIDJSON_VERSION
 #define LUA_RAPIDJSON_VERSION "scm"
@@ -129,12 +138,14 @@ static int json_load(lua_State* L)
 
 struct Key
 {
-	Key(const char* k, SizeType l) : key(k), size(l) {}
+	// 保留排序键的原始字节长度，序列化时按同一长度读取 Lua 键。
+	Key(const char* k, rapidjson::SizeType l) : key(k), size(l) {}
 	bool operator<(const Key& rhs) const {
 		return strcmp(key, rhs.key) < 0;
 	}
 	const char* key;
-	SizeType size;
+	// Rapidjson 字符串的字节数，不向全局引入同名类型。
+	rapidjson::SizeType size;
 };
 
 
@@ -160,6 +171,7 @@ public:
 	}
 
 private:
+	// 将 Lua 标量或容器写入当前 Writer，字符串使用准确的原始字节长度。
 	template<typename Writer>
 	void encodeValue(lua_State* L, Writer* writer, int idx, int depth = 0)
 	{
@@ -181,7 +193,7 @@ private:
 			return;
 		case LUA_TSTRING:
 			s = lua_tolstring(L, idx, &len);
-			writer->String(s, static_cast<SizeType>(len));
+			writer->String(s, static_cast<rapidjson::SizeType>(len));
 			return;
 		case LUA_TTABLE:
 			return encodeTable(L, writer, idx, depth + 1);
@@ -203,6 +215,7 @@ private:
 		}
 	}
 
+	// 沿既有选项判定数组或对象，排序时保留字符串键的完整字节数。
 	template<typename Writer>
 	void encodeTable(lua_State* L, Writer* writer, int idx, int depth)
 	{
@@ -238,7 +251,7 @@ private:
 			{
 				size_t len = 0;
 				const char* key = lua_tolstring(L, -2, &len);
-				keys.push_back(Key(key, static_cast<SizeType>(len)));
+				keys.push_back(Key(key, static_cast<rapidjson::SizeType>(len)));
 			}
 
 			// pop value, leaving original key
@@ -249,6 +262,7 @@ private:
 		encodeObject(L, writer, idx, depth, keys);
 	}
 
+	// 写入对象键值；普通路径与排序路径使用同一 JSON Writer 长度类型。
 	template<typename Writer>
 	void encodeObject(lua_State* L, Writer* writer, int idx, int depth)
 	{
@@ -264,7 +278,7 @@ private:
 			{
 				size_t len = 0;
 				const char* key = lua_tolstring(L, -2, &len);
-				writer->Key(key, static_cast<SizeType>(len));
+				writer->Key(key, static_cast<rapidjson::SizeType>(len));
 				encodeValue(L, writer, -1, depth);
 			}
 
@@ -276,6 +290,7 @@ private:
 		writer->EndObject();
 	}
 
+	// 写入对象键值；普通路径与排序路径使用同一 JSON Writer 长度类型。
 	template<typename Writer>
 	void encodeObject(lua_State* L, Writer* writer, int idx, int depth, std::vector<Key> &keys)
 	{
@@ -289,7 +304,7 @@ private:
 		std::vector<Key>::const_iterator e = keys.end();
 		for (; i != e; ++i)
 		{
-			writer->Key(i->key, static_cast<SizeType>(i->size));
+			writer->Key(i->key, static_cast<rapidjson::SizeType>(i->size));
 			lua_pushlstring(L, i->key, i->size); // [key]
 			lua_gettable(L, idx); // [value]
 			encodeValue(L, writer, -1, depth);

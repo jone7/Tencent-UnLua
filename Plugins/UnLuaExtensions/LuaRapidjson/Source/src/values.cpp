@@ -3,7 +3,7 @@
 
 
 using rapidjson::Value;
-using rapidjson::SizeType;
+// 长度类型在使用处限定命名空间，避免遮蔽 UE 容器的 SizeType。
 
 
 namespace values {
@@ -48,10 +48,11 @@ namespace values {
 			return luax::isinteger(L, idx, &integer) ? Value(integer) : Value(lua_tonumber(L, idx));
 		}
 
+		// 按 Lua 字符串实际字节数构造 JSON 字符串，不截断 Unicode 或内嵌零字节。
 		Value StringValue(lua_State* L, int idx, Allocator& allocator) {
 			size_t len;
 			const char* s = lua_tolstring(L, idx, &len);
-			return Value(s, static_cast<SizeType>(len), allocator);
+			return Value(s, static_cast<rapidjson::SizeType>(len), allocator);
 		}
 
 		Value TableValue(lua_State* L, int idx, int depth, Allocator& allocator)

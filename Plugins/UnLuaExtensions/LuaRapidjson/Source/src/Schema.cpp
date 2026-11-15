@@ -12,7 +12,11 @@
 #pragma push_macro("check")
 #undef check
 
-using namespace rapidjson;
+// 只导入本文件所需名称，避免 rapidjson::SizeType 污染 UE 模板的全局名称查找。
+using rapidjson::Document;
+using rapidjson::SchemaDocument;
+using rapidjson::SchemaValidator;
+using rapidjson::StringBuffer;
 
 template<>
 const char* const Userdata<SchemaDocument>::metatable()
