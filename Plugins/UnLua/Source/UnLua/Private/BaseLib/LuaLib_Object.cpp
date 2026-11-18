@@ -315,9 +315,30 @@ static int32 FSoftObjectPtr_ToString(lua_State* L)
     return 1;
 }
 
+/** 使用引擎默认加载标志同步加载软引用，保留 Lua 的无参实例方法。 */
+static int32 FSoftObjectPtr_LoadSynchronous(lua_State* L)
+{
+    if (lua_gettop(L) < 1)
+    {
+        UE_LOG(LogUnLua, Warning, TEXT("Attempted to call FSoftObjectPtr::LoadSynchronous without an instance."));
+        return 0;
+    }
+
+    const FSoftObjectPtr* Object = UnLua::Get(L, 1, UnLua::TType<FSoftObjectPtr*>());
+    if (!Object)
+    {
+        UE_LOG(LogUnLua, Error, TEXT("Attempted to call FSoftObjectPtr::LoadSynchronous with nullptr of 'this'."));
+        return 0;
+    }
+
+    return UnLua::PushUObject(L, Object->LoadSynchronous());
+}
+
+/** 注册软引用的字符串转换和使用默认加载标志的 Lua 方法。 */
 static const luaL_Reg FSoftObjectPtrLib[] =
 {
     {"__tostring", FSoftObjectPtr_ToString},
+    {"LoadSynchronous", FSoftObjectPtr_LoadSynchronous},
     {nullptr, nullptr}
 };
 
@@ -330,7 +351,6 @@ BEGIN_EXPORT_CLASS(FSoftObjectPtr, const UObject*)
     ADD_FUNCTION_EX("GetAssetName", FString, GetAssetName)
     ADD_FUNCTION_EX("GetLongPackageName", FString, GetLongPackageName)
     ADD_CONST_FUNCTION_EX("Get", UObject*, Get)
-    ADD_CONST_FUNCTION_EX("LoadSynchronous", UObject*, LoadSynchronous)
     ADD_LIB(FSoftObjectPtrLib)
 END_EXPORT_CLASS()
 

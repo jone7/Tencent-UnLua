@@ -400,9 +400,12 @@ namespace UnLuaDefaultParamCollectorUbtPlugin
             }
         }
 
+        // 查找参数的默认值。Comment 是 UHT 的文档键，同名参数只认带前缀的默认值。
         private static bool FindDefaultValueString(UhtMetaData metaData, UhtProperty property, out string value)
         {
-            var hasValue = metaData.TryGetValue(property.SourceName, out string? tempValue);
+            string? tempValue = null;
+            var hasValue = !property.SourceName.Equals("Comment", StringComparison.OrdinalIgnoreCase)
+                && metaData.TryGetValue(property.SourceName, out tempValue);
             if (!hasValue)
             {
                 var cppKey = "CPP_Default_" + property.SourceName;

@@ -367,7 +367,10 @@ typedef struct GCObject {
 #define setsvalue2n	setsvalue
 
 
+/* C++ 构建用命名空间隔离 Unreal 的同名类型，C 构建直接使用同一结构。 */
+#ifdef __cplusplus
 namespace lua {
+#endif
   /*
   ** Header for a string value.
   */
@@ -382,12 +385,14 @@ namespace lua {
     } u;
     char contents[1];
   } TString;
+#ifdef __cplusplus
 }
 
 
 #ifndef TString
 #define TString lua::TString
 #endif // !TString
+#endif /* __cplusplus */
 
 
 

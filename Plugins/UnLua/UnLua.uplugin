@@ -25,7 +25,7 @@
             "Name": "UnLua",
             "Type": "Runtime",
             "LoadingPhase": "PreDefault",
-            "WhitelistPlatforms": [ "Win64", "Mac", "IOS", "Android", "Linux" ]
+            "WhitelistPlatforms": [ "Win64", "Mac", "IOS", "Android", "Linux", "Wasm" ]
         },
         {
             "Name": "UnLuaEditor",

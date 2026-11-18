@@ -40,6 +40,7 @@ namespace UnLua
         return Description;
     }
 
+    /** 将 Lua 栈上的值转换为调试文本，按剩余深度展开容器。 */
     void FLuaDebugValue::Build(lua_State *L, int32 Index, int32 Level)
     {
         // #lizard forgives
@@ -65,7 +66,7 @@ namespace UnLua
         case LUA_TNUMBER:
             if (lua_isinteger(L, Index))
             {
-                ReadableValue = FString::Printf(TEXT("%d"), lua_tointeger(L, Index));
+                ReadableValue = LexToString(static_cast<int64>(lua_tointeger(L, Index)));
             }
             else
             {
@@ -423,9 +424,7 @@ namespace UnLua
         }
     }
 
-    /**
-     * Build value based on a FProperty
-     */
+    /** 根据反射属性类型构建调试文本，整数保留原始符号与位宽。 */
     void FLuaDebugValue::BuildFromUProperty(const FProperty *InProperty, void *ValuePtr)
     {
         // #lizard forgives
@@ -442,13 +441,18 @@ namespace UnLua
         case CPT_Int16:
         case CPT_Int:
         case CPT_Int64:
+            {
+                const FNumericProperty* NumericProperty = static_cast<const FNumericProperty*>(InProperty);
+                ReadableValue = LexToString(NumericProperty->GetSignedIntPropertyValue(ValuePtr));
+            }
+            break;
         case CPT_Byte:
         case CPT_UInt16:
         case CPT_UInt32:
         case CPT_UInt64:
             {
-                FNumericProperty *NumericProperty = (FNumericProperty*)InProperty;
-                ReadableValue = FString::Printf(TEXT("%ld"), NumericProperty->GetUnsignedIntPropertyValue(ValuePtr));
+                const FNumericProperty* NumericProperty = static_cast<const FNumericProperty*>(InProperty);
+                ReadableValue = LexToString(NumericProperty->GetUnsignedIntPropertyValue(ValuePtr));
             }
             break;
         case CPT_Float:

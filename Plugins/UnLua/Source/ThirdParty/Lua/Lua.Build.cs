@@ -93,6 +93,55 @@ public class Lua : ModuleRules
             SetupForRuntimeDependency(pdbPath, "Win64");
     }
 
+    /** 使用与 UE Wasm64 一致的位宽和线程 ABI 构建 Lua 静态库。 */
+    private void BuildForWasm()
+    {
+        if (!Target.Architecture.ToString().Equals("wasm64", StringComparison.OrdinalIgnoreCase))
+            throw new BuildException("This Lua build requires the UE Wasm64 target.");
+
+        var sdkRoot = Environment.GetEnvironmentVariable("WASM_EMSDK_ROOT");
+        if (string.IsNullOrWhiteSpace(sdkRoot))
+            sdkRoot = Environment.GetEnvironmentVariable("EMSDK");
+        if (string.IsNullOrWhiteSpace(sdkRoot))
+            throw new BuildException("Set WASM_EMSDK_ROOT to the active Emscripten SDK before building Lua for Wasm.");
+
+        var toolchain = Path.Combine(sdkRoot, "upstream", "emscripten", "cmake", "Modules", "Platform", "Emscripten.cmake");
+        if (!File.Exists(toolchain))
+            throw new BuildException("Emscripten CMake toolchain not found: {0}", toolchain);
+
+        var buildDir = Path.Combine(Target.ProjectFile.Directory.FullName, "Intermediate", "Build", "Wasm", "Lua",
+            m_LuaVersion, m_LibDirName, m_Config);
+        var libFile = Path.Combine(buildDir, m_LibName);
+        if (!File.Exists(libFile))
+        {
+            RunWasmCMake("-S", ModuleDirectory, "-B", buildDir, "-G", "Ninja",
+                $"-DCMAKE_TOOLCHAIN_FILE={toolchain}", $"-DCMAKE_BUILD_TYPE={m_Config}",
+                "-DCMAKE_C_FLAGS=-m64 -pthread", "-DCMAKE_CXX_FLAGS=-m64 -pthread",
+                $"-DLUA_VERSION={m_LuaVersion}", $"-DLUA_COMPILE_AS_CPP={(m_CompileAsCpp ? 1 : 0)}");
+            RunWasmCMake("--build", buildDir);
+            if (!File.Exists(libFile))
+                throw new BuildException("CMake did not produce the Wasm Lua archive: {0}", libFile);
+        }
+
+        PublicAdditionalLibraries.Add(libFile);
+    }
+
+    /** 运行 Wasm Lua 的配置或编译步骤，失败时中止当前目标。 */
+    private static void RunWasmCMake(params string[] arguments)
+    {
+        var startInfo = new ProcessStartInfo { FileName = "cmake", UseShellExecute = false };
+        foreach (var argument in arguments)
+            startInfo.ArgumentList.Add(argument);
+
+        using var process = Process.Start(startInfo);
+        if (process == null)
+            throw new BuildException("Could not start CMake for Wasm Lua.");
+
+        process.WaitForExit();
+        if (process.ExitCode != 0)
+            throw new BuildException("CMake failed building Wasm Lua (exit {0}): {1}", process.ExitCode, string.Join(" ", arguments));
+    }
+
     private void BuildForAndroid()
     {
         var ndkRoot = Environment.GetEnvironmentVariable("NDKROOT");
